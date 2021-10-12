@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
@@ -31,11 +32,10 @@ Checks if the two objects represent the same face or not
 :face, saved_face: np.ndarray
 :returns: bool
 """
-def is_the_same_face(face1, face2):    
-    score, diff = structural_similarity(face1, face2, full=True)
+def diff_of_faces(face1, face2):    
+    score, diff = structural_similarity(face1, face2, full=True, multichannel=True)
     diff = (diff * 255).astype("uint8")
-    # print(diff)
-    return False
+    return diff
 
 
 """
@@ -47,12 +47,22 @@ Checks for an existing face and if found returns the face's name
 def check_face(face, frame):
     saved_faces = [(np.load(os.path.join('faces', file)), file) for file in os.listdir('faces') if file.split('.')[-1] == 'npy']
     face = preprocess_face_img(face, frame)
-    
-    for saved_face, saved_face_name in saved_faces:
-        if is_the_same_face(face, saved_face):
-            return saved_face_name
+    face_diffs = {}
 
-    return 'Unknown'
+    for saved_face, saved_face_name in saved_faces:
+        face_diffs[saved_face_name] =  np.sum(diff_of_faces(face, saved_face))
+
+    min_name = ""
+    min_diff = sys.maxsize
+
+    for name in face_diffs.keys():
+        if face_diffs[name] < min_diff:
+            min_diff = face_diffs[name]
+            min_name = name
+
+    print(face_diffs)
+
+    return min_name if min_diff < 20_000_000 else 'Unknown'
 
 
 """
@@ -64,6 +74,7 @@ def detect_faces(frame, flip=False):
 
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    """
     faces = profile_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
     for (x, y, w, h) in faces:  # Draw rectangles around faces
         
@@ -72,15 +83,18 @@ def detect_faces(frame, flip=False):
 
         cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0,))
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
     """
+
     faces2 = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
     for (x, y, w, h) in faces2:
-        cv2.putText(frame, 'Unrecognized', (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255,))
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-    """
+        
+        # Check for existing face
+        name = check_face((x,y,w,h), frame)
+        
+        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0,))
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-    return frame, faces
+    return frame, None
 
     
 """
