@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 
-from src.detect import detect_face
+from src.detect import detect_faces
 
 
 cv2.namedWindow("preview")
@@ -23,7 +23,7 @@ while rval:
     rval, frame = vc.read()
 
     # Detect face
-    frame, face = detect_face(frame, flip=True)
+    frame, faces = detect_faces(frame, flip=True)
 
     # Exit on ESC
     key = cv2.waitKey(20)

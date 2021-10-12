@@ -2,24 +2,26 @@ import cv2
 import numpy as np
 
 
-# face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
 profile_cascade = cv2.CascadeClassifier('resources/haarcascade_profileface.xml')
 
 
 """
 :frame: np.ndarray
 """
-def detect_faces(frame):
+def detect_faces(frame, flip=False):
+    if flip:
+        frame = cv2.flip(frame, 1)
 
-    # Preprocessing
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # Finding face
     faces = profile_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
-    for (x, y, w, h) in faces:
+    for (x, y, w, h) in faces:  # Draw rectangles around faces
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-        # Draw rectangles around faces
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0, 0.5), 2)
+    faces2 = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+    for (x, y, w, h) in faces2:
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
     return frame, faces
 
@@ -44,7 +46,7 @@ def detect_face(frame, flip=False):
         face = x, y, w, h
 
         # Draw rectangle
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0, 0.5), 2)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         
     return frame, face
 
