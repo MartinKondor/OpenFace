@@ -2,11 +2,12 @@ import os
 import sys
 import cv2
 import numpy as np
-from skimage.metrics import structural_similarity
 
 
 face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
 profile_cascade = cv2.CascadeClassifier('resources/haarcascade_profileface.xml')
+BORDER_COLOR = (0, 255, 50)
+TEXT_COLOR = (0, 255, 50)
 
 
 """
@@ -32,10 +33,13 @@ Checks if the two objects represent the same face or not
 :face, saved_face: np.ndarray
 :returns: bool
 """
-def diff_of_faces(face1, face2):    
-    score, diff = structural_similarity(face1, face2, full=True, multichannel=True)
-    diff = (diff * 255).astype("uint8")
-    return diff
+def diff_of_faces(face1, face2):
+    result = np.abs(face1 - face2 + 1) / 1000000000
+    #result += 0.00002 * np.abs(np.argmin(face1) - np.argmin(face2) + 1)
+    #result += 0.00002 * np.abs(np.argmax(face1) - np.argmax(face2) + 1)
+    result += 0.00004 * np.abs(np.min(face1) - np.min(face2) + 1)
+    result += 0.00004 * np.abs(np.max(face1) - np.max(face2) + 1)
+    return result
 
 
 """
@@ -60,9 +64,8 @@ def check_face(face, frame):
             min_diff = face_diffs[name]
             min_name = name
 
-    print(face_diffs)
-
-    return min_name if min_diff < 20_000_000 else 'Unknown'
+    # print(face_diffs)
+    return '.'.join(min_name.split('.')[:-1]) if min_diff < 256 else 'Unknown'
 
 
 """
@@ -81,8 +84,8 @@ def detect_faces(frame, flip=False):
         # Check for existing face
         name = check_face((x,y,w,h), frame)
 
-        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0,))
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1.5, TEXT_COLOR)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), BORDER_COLOR, 2)
     """
 
     faces2 = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
@@ -91,8 +94,8 @@ def detect_faces(frame, flip=False):
         # Check for existing face
         name = check_face((x,y,w,h), frame)
         
-        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0,))
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1.5, TEXT_COLOR, thickness=2)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), BORDER_COLOR, 2)
 
     return frame, None
 
@@ -113,11 +116,11 @@ def detect_face(frame, flip=False):
 
     if len(faces) != 0:
         # Select the biggest face
-        x, y, w, h = sorted(faces, key=lambda f: f[2]*f[3])[-1]
+        x, y, w, h = sorted(faces, key=lambda f: f[2] * f[3])[-1]
         face = x, y, w, h
 
         # Draw rectangle
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), BORDER_COLOR, 2)
         
     return frame, face
 
