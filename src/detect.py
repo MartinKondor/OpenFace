@@ -5,7 +5,6 @@ import numpy as np
 
 
 face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
-profile_cascade = cv2.CascadeClassifier('resources/haarcascade_profileface.xml')
 BORDER_COLOR = (0, 255, 50)
 TEXT_COLOR = (0, 255, 50)
 
@@ -34,12 +33,7 @@ Checks if the two objects represent the same face or not
 :returns: bool
 """
 def diff_of_faces(face1, face2):
-    result = np.abs(face1 - face2 + 1) / 1000000000
-    #result += 0.00002 * np.abs(np.argmin(face1) - np.argmin(face2) + 1)
-    #result += 0.00002 * np.abs(np.argmax(face1) - np.argmax(face2) + 1)
-    result += 0.00004 * np.abs(np.min(face1) - np.min(face2) + 1)
-    result += 0.00004 * np.abs(np.max(face1) - np.max(face2) + 1)
-    return result
+    return np.linalg.norm(face1 - face2, axis=1)
 
 
 """
@@ -49,6 +43,9 @@ Checks for an existing face and if found returns the face's name
 :returns: str, the name of the recognized face
 """
 def check_face(face, frame):
+    if face is None:
+        return None
+
     saved_faces = [(np.load(os.path.join('faces', file)), file) for file in os.listdir('faces') if file.split('.')[-1] == 'npy']
     face = preprocess_face_img(face, frame)
     face_diffs = {}
@@ -64,8 +61,9 @@ def check_face(face, frame):
             min_diff = face_diffs[name]
             min_name = name
 
-    # print(face_diffs)
-    return '.'.join(min_name.split('.')[:-1]) if min_diff < 256 else 'Unknown'
+    print(face_diffs)
+    return '.'.join(min_name.split('.')[:-1])
+    # return '.'.join(min_name.split('.')[:-1]) if min_diff < 2_000_000 else 'Unknown'
 
 
 """
@@ -77,17 +75,6 @@ def detect_faces(frame, flip=False):
 
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    """
-    faces = profile_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
-    for (x, y, w, h) in faces:  # Draw rectangles around faces
-        
-        # Check for existing face
-        name = check_face((x,y,w,h), frame)
-
-        cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1.5, TEXT_COLOR)
-        cv2.rectangle(frame, (x, y), (x+w, y+h), BORDER_COLOR, 2)
-    """
-
     faces2 = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
     for (x, y, w, h) in faces2:
         
@@ -97,7 +84,7 @@ def detect_faces(frame, flip=False):
         cv2.putText(frame, name, (x, y - 5), cv2.cv2.FONT_HERSHEY_PLAIN, 1.5, TEXT_COLOR, thickness=2)
         cv2.rectangle(frame, (x, y), (x+w, y+h), BORDER_COLOR, 2)
 
-    return frame, None
+    return frame, faces2
 
     
 """
@@ -111,7 +98,7 @@ def detect_face(frame, flip=False):
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Finding face
-    faces = profile_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+    faces = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
     face = None
 
     if len(faces) != 0:

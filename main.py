@@ -2,7 +2,7 @@ import cv2
 import time
 import numpy as np
 
-from src.detect import detect_face, save_face, show_face
+from src.detect import detect_faces, save_face, show_face, check_face
 from src.learn import learn_face
 
 
@@ -31,12 +31,16 @@ else:
 
 
 while rval:
+    cv2.imshow("preview", frame)
     rval, frame = vc.read()
 
     # Detect face
-    frame, face = detect_face(frame)
+    frame, face = detect_faces(frame, flip=True)
+    key = cv2.waitKey(20)
+    
+    face = face[0] if len(face) != 0 else None
 
-    if face is not None:
+    if key == 32 and face is not None:
         show_face(face, frame)
         cv2.waitKey()
 
@@ -52,7 +56,6 @@ while rval:
         learn_face(face)
         break
 
-    key = cv2.waitKey(20)
     if key == 27:
         break
 

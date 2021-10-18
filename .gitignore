@@ -18,6 +18,7 @@ __pycache__/
 
 # Numpy files
 *.npy
+*.npy_
 
 # Distribution / packaging
 .Python
