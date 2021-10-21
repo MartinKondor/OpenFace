@@ -1,16 +1,18 @@
-# OpenFace
+# 🙈🙉🙊 OpenFace
 
-Open source face recognizer
+Open source face recognizer.
 
 ## Usage
 
-To run the program you just need to run the
+To make the program learn a new face, just run:
 
 ```
 python main.py
 ```
 
-Then to try face recognition run
+If you see a square around the face, hit space and see the console for instructions.
+
+To just run face detection, run:
 
 ```
 python preview.py
@@ -22,7 +24,7 @@ python preview.py
 
 ## License
 
-Copyright &copy; Martin Kondor 2019
+Copyright &copy; Martin Kondor 2021
 
 This repository is licensed under the ```BSD 3-Clause``` license.
 See the [LICENSE](./LICENSE) file for more details.
